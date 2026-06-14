@@ -1,0 +1,51 @@
+{
+  "classification": {
+    "n_total": 29,
+    "decisions": {
+      "skip": 12,
+      "robust": 16,
+      "repair": 1
+    },
+    "n_ge_b1": 12,
+    "n_eq_b4": 0,
+    "avg": {
+      "hybriddqr_metric": 0.6583,
+      "B1_no_repair_default": 0.65,
+      "B2_full_repair_default": 0.9079,
+      "B3_no_repair_best_robust": 0.6359,
+      "B4_oracle": 0.9175
+    }
+  },
+  "regression": {
+    "n_total": 29,
+    "decisions": {
+      "skip": 14,
+      "robust": 15
+    },
+    "n_ge_b1": 23,
+    "n_eq_b4": 10,
+    "avg": {
+      "hybriddqr_metric": 0.6254,
+      "B1_no_repair_default": 0.6757,
+      "B2_full_repair_default": 0.7239,
+      "B3_no_repair_best_robust": 0.6225,
+      "B4_oracle": 0.7614
+    }
+  },
+  "clustering": {
+    "n_total": 29,
+    "decisions": {
+      "skip": 13,
+      "robust": 16
+    },
+    "n_ge_b1": 29,
+    "n_eq_b4": 3,
+    "avg": {
+      "hybriddqr_metric": 0.0195,
+      "B1_no_repair_default": 0.0195,
+      "B2_full_repair_default": 0.0111,
+      "B3_no_repair_best_robust": 0.0195,
+      "B4_oracle": 0.0467
+    }
+  }
+}
