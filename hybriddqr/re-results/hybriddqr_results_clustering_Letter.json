@@ -1,0 +1,208 @@
+{
+  "class_balance": [
+    {
+      "B1_no_repair_default": 0.3416742045870732,
+      "B2_full_repair_default": 0.35338268744578616,
+      "B3_no_repair_best_robust": 0.3416742045870732,
+      "B4_oracle": 0.35338268744578616,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.3416742045870732,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_imbalance_level': '0.0', '_target_col': 'class', '_target_n_samples': '3328'}",
+      "quality_after": 1.0,
+      "quality_before": 1.0
+    },
+    {
+      "B1_no_repair_default": 0.33411047779274355,
+      "B2_full_repair_default": 0.36652958075823494,
+      "B3_no_repair_best_robust": 0.33411047779274355,
+      "B4_oracle": 0.3668571576660035,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.33411047779274355,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_imbalance_level': '0.5', '_target_col': 'class', '_target_n_samples': '3328'}",
+      "quality_after": 0.5497975708502024,
+      "quality_before": 0.5497975708502024
+    },
+    {
+      "B1_no_repair_default": 0.34819544905557054,
+      "B2_full_repair_default": 0.40053968091868863,
+      "B3_no_repair_best_robust": 0.34819544905557054,
+      "B4_oracle": 0.42690975454290336,
+      "decision": "robust",
+      "delta_estimate": 0.045789455601838946,
+      "hybriddqr_metric": 0.34819544905557054,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_imbalance_level': '1.0', '_target_col': 'class', '_target_n_samples': '3328'}",
+      "quality_after": 0.31590148981453325,
+      "quality_before": 0.31590148981453325
+    }
+  ],
+  "completeness": [
+    {
+      "B1_no_repair_default": 0.3464637283247147,
+      "B2_full_repair_default": 0.3492577204044781,
+      "B3_no_repair_best_robust": 0.3464637283247147,
+      "B4_oracle": 0.35296818123598667,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.3464637283247147,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_percentages': '0.0', 'target_feature': 'class', 'placeholder_numerical': '-1', 'placeholder_categorical': 'None', 'numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'x-ege.1', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", 'categorical_cols': '[]'}",
+      "quality_after": 1.0,
+      "quality_before": 1.0
+    },
+    {
+      "B1_no_repair_default": 0.01806111388573689,
+      "B2_full_repair_default": 0.16130563685283117,
+      "B3_no_repair_best_robust": 0.01806111388573689,
+      "B4_oracle": 0.18311992974755087,
+      "decision": "robust",
+      "delta_estimate": 0.16505881586181398,
+      "hybriddqr_metric": 0.01806111388573689,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_percentages': '0.5', 'target_feature': 'class', 'placeholder_numerical': '-1', 'placeholder_categorical': 'None', 'numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'x-ege.1', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", 'categorical_cols': '[]'}",
+      "quality_after": 0.5,
+      "quality_before": 0.5
+    },
+    {
+      "B1_no_repair_default": 0.0,
+      "B2_full_repair_default": 0.0,
+      "B3_no_repair_best_robust": 0.0,
+      "B4_oracle": 0.0,
+      "decision": "robust",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.0,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_percentages': '1.0', 'target_feature': 'class', 'placeholder_numerical': '-1', 'placeholder_categorical': 'None', 'numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'x-ege.1', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", 'categorical_cols': '[]'}",
+      "quality_after": 0.0,
+      "quality_before": 0.0
+    }
+  ],
+  "consistency": [],
+  "feature_accuracy": [
+    {
+      "B1_no_repair_default": 0.3464637283247147,
+      "B2_full_repair_default": 0.35564580528811435,
+      "B3_no_repair_best_robust": 0.3464637283247147,
+      "B4_oracle": 0.35740165743800506,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.3464637283247147,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_categorical_cols': '[]', '_numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'y-ege', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", '_pollution_levels': \"{'high': 0.0, 'onpix': 0.0, 'width': 0.0, 'x-bar': 0.0, 'x-box': 0.0, 'x-ege': 0.0, 'y-ege': 0.0, 'x2bar': 0.0, 'x2ybr': 0.0, 'xegvy': 0.0, 'xy2br': 0.0, 'xybar': 0.0, 'y-bar': 0.0, 'y-box': 0.0, 'y2bar': 0.0, 'yegvx': 0.0}\"}",
+      "quality_after": 1.0,
+      "quality_before": 1.0
+    },
+    {
+      "B1_no_repair_default": 0.1032848750286973,
+      "B2_full_repair_default": 0.10286131219052157,
+      "B3_no_repair_best_robust": 0.1032848750286973,
+      "B4_oracle": 0.16985807272540354,
+      "decision": "robust",
+      "delta_estimate": -0.0004235628381757395,
+      "hybriddqr_metric": 0.1032848750286973,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_categorical_cols': '[]', '_numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'y-ege', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", '_pollution_levels': \"{'high': 0.5, 'onpix': 0.5, 'width': 0.5, 'x-bar': 0.5, 'x-box': 0.5, 'x-ege': 0.5, 'y-ege': 0.5, 'x2bar': 0.5, 'x2ybr': 0.5, 'xegvy': 0.5, 'xy2br': 0.5, 'xybar': 0.5, 'y-bar': 0.5, 'y-box': 0.5, 'y2bar': 0.5, 'yegvx': 0.5}\"}",
+      "quality_after": 0.6019605885842115,
+      "quality_before": 0.6019605885842115
+    },
+    {
+      "B1_no_repair_default": 0.020447691293516923,
+      "B2_full_repair_default": 0.019527657744210617,
+      "B3_no_repair_best_robust": 0.020447691293516923,
+      "B4_oracle": 0.03991243858368283,
+      "decision": "robust",
+      "delta_estimate": -0.000920033549306306,
+      "hybriddqr_metric": 0.020447691293516923,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', '_categorical_cols': '[]', '_numerical_cols': \"['high', 'onpix', 'width', 'x-bar', 'x-box', 'x-ege', 'y-ege', 'x2bar', 'x2ybr', 'xegvy', 'xy2br', 'xybar', 'y-bar', 'y-box', 'y2bar', 'yegvx']\", '_pollution_levels': \"{'high': 1.0, 'onpix': 1.0, 'width': 1.0, 'x-bar': 1.0, 'x-box': 1.0, 'x-ege': 1.0, 'y-ege': 1.0, 'x2bar': 1.0, 'x2ybr': 1.0, 'xegvy': 1.0, 'xy2br': 1.0, 'xybar': 1.0, 'y-bar': 1.0, 'y-box': 1.0, 'y2bar': 1.0, 'yegvx': 1.0}\"}",
+      "quality_after": 0.20392117716842278,
+      "quality_before": 0.20392117716842278
+    }
+  ],
+  "target_accuracy": [
+    {
+      "B1_no_repair_default": 0.3464637283247147,
+      "B2_full_repair_default": 0.3492577204044781,
+      "B3_no_repair_best_robust": 0.3464637283247147,
+      "B4_oracle": 0.35296818123598667,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.3464637283247147,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_level': '0.0', 'target_col': 'class', 'is_categorical': 'True'}",
+      "quality_after": 1.0,
+      "quality_before": 1.0
+    },
+    {
+      "B1_no_repair_default": 0.08667059857975234,
+      "B2_full_repair_default": 0.08830965632592265,
+      "B3_no_repair_best_robust": 0.08667059857975234,
+      "B4_oracle": 0.09320741868869194,
+      "decision": "robust",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.08667059857975234,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_level': '0.5', 'target_col': 'class', 'is_categorical': 'True'}",
+      "quality_after": 0.5,
+      "quality_before": 0.5
+    },
+    {
+      "B1_no_repair_default": 0.001392143422194088,
+      "B2_full_repair_default": 0.004590963795579067,
+      "B3_no_repair_best_robust": 0.001392143422194088,
+      "B4_oracle": 0.004590963795579067,
+      "decision": "robust",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.001392143422194088,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'pollution_level': '1.0', 'target_col': 'class', 'is_categorical': 'True'}",
+      "quality_after": 0.0,
+      "quality_before": 0.0
+    }
+  ],
+  "uniqueness": [
+    {
+      "B1_no_repair_default": 0.34252120934979857,
+      "B2_full_repair_default": 0.3466155667274811,
+      "B3_no_repair_best_robust": 0.34252120934979857,
+      "B4_oracle": 0.3466155667274811,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.34252120934979857,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'distribution_function_name': 'same', 'distribution_function_parameters': '{}', 'duplicate_factor': '1.0', 'target_variable': 'class'}",
+      "quality_after": 1.0,
+      "quality_before": 1.0
+    },
+    {
+      "B1_no_repair_default": 0.3564957736726663,
+      "B2_full_repair_default": 0.35344113599685645,
+      "B3_no_repair_best_robust": 0.3564957736726663,
+      "B4_oracle": 0.356828212930144,
+      "decision": "skip",
+      "delta_estimate": 0.0,
+      "hybriddqr_metric": 0.3564957736726663,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'distribution_function_name': 'same', 'distribution_function_parameters': '{}', 'duplicate_factor': '1.6666666667', 'target_variable': 'class'}",
+      "quality_after": 0.5991407799074686,
+      "quality_before": 0.5991407799074686
+    },
+    {
+      "B1_no_repair_default": 0.37329899680660705,
+      "B2_full_repair_default": 0.3532265830795108,
+      "B3_no_repair_best_robust": 0.37329899680660705,
+      "B4_oracle": 0.37329899680660705,
+      "decision": "robust",
+      "delta_estimate": -0.029666299299017485,
+      "hybriddqr_metric": 0.37329899680660705,
+      "model_selected": "centroid",
+      "pollution_params": "{'random_seed': '2967137', 'distribution_function_name': 'normal', 'distribution_function_parameters': \"{'loc': 1.0, 'scale': 5.0}\", 'duplicate_factor': '5.0', 'target_variable': 'class'}",
+      "quality_after": 0.199977939554379,
+      "quality_before": 0.199977939554379
+    }
+  ]
+}

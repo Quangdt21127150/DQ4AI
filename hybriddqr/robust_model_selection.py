@@ -34,6 +34,59 @@ from regression.experiments import (
     DecisionTreeRegressionExperiment,
     RandomForestRegressionExperiment,
 )
+import clustering.experiments as _clustering_experiments
+from kmodes.kprototypes import KPrototypes as _KPrototypes
+
+
+class _SingleProcessKPrototypes(_KPrototypes):
+    """KMeansExperiment's k-Prototypes branch (clustering/experiments.py) hardcodes
+    n_jobs=-1, which spawns a joblib/loky worker pool. On this Windows machine a stalled
+    worker ("A worker stopped while some jobs were given to the executor") has been
+    observed to block the whole pool for hours rather than erroring out -- the same class
+    of Windows multiprocessing issue repair.py already works around for cleanlab/
+    cross_val_predict by pinning n_jobs=1. Patching the module-level name here (rather than
+    editing clustering/experiments.py, which is Root code) forces every KPrototypes
+    instantiation to run single-process."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["n_jobs"] = 1
+        super().__init__(*args, **kwargs)
+
+
+_clustering_experiments.KPrototypes = _SingleProcessKPrototypes
+
+from sklearn.mixture import GaussianMixture as _GaussianMixture
+
+
+class _FastGaussianMixture(_GaussianMixture):
+    """GaussianMixtureExperiment (clustering/experiments.py) fits with the sklearn default
+    covariance_type='full' and n_init=10. Full covariance costs O(d^3) per EM step per
+    component; on covtype_2967137.csv (55 one-hot columns, vs. bank's 4) this made a single
+    pollution level take multiple hours instead of minutes. Diagonal covariance is the
+    standard fix for exactly this case (cost drops to O(d)) and one init instead of ten cuts
+    the remaining constant factor -- same rationale as the KPrototypes patch above: keep
+    Root code's file untouched, adjust the runtime behaviour from here."""
+
+    def __init__(self, n_components=1, *, covariance_type="full", tol=1e-3, reg_covar=1e-6,
+                 max_iter=100, n_init=1, init_params="kmeans", weights_init=None,
+                 means_init=None, precisions_init=None, random_state=None, warm_start=False,
+                 verbose=0, verbose_interval=10):
+        # Signature must mirror sklearn.mixture.GaussianMixture's exactly (no *args/**kwargs)
+        # -- BaseEstimator.get_params() inspects __init__ and raises on varargs, which broke
+        # every call silently (caught by the try/except around each model in
+        # clean_reference_performance, so this model was quietly dropped instead of erroring
+        # loudly). covariance_type/n_init are still forced to the fast settings below
+        # regardless of what's passed in.
+        super().__init__(
+            n_components=n_components, covariance_type="diag", tol=tol, reg_covar=reg_covar,
+            max_iter=max_iter, n_init=1, init_params=init_params, weights_init=weights_init,
+            means_init=means_init, precisions_init=precisions_init, random_state=random_state,
+            warm_start=warm_start, verbose=verbose, verbose_interval=verbose_interval,
+        )
+
+
+_clustering_experiments.GaussianMixture = _FastGaussianMixture
+
 from clustering.experiments import KMeansExperiment, GaussianMixtureExperiment
 
 CLASSIFICATION_MODELS = {

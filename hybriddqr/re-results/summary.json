@@ -1,51 +1,202 @@
 {
-  "classification": {
-    "n_total": 29,
-    "decisions": {
-      "skip": 12,
-      "robust": 16,
-      "repair": 1
+  "overall": {
+    "b2_catastrophic_failures": 0,
+    "decision_counts": {
+      "repair": 3,
+      "robust": 126,
+      "skip": 97
     },
-    "n_ge_b1": 12,
-    "n_eq_b4": 0,
-    "avg": {
-      "hybriddqr_metric": 0.6583,
-      "B1_no_repair_default": 0.65,
-      "B2_full_repair_default": 0.9079,
-      "B3_no_repair_best_robust": 0.6359,
-      "B4_oracle": 0.9175
+    "hybriddqr_ge_b1_rate": 0.699,
+    "median_B1": 0.4692,
+    "median_B2": 0.5509,
+    "median_B3": 0.5378,
+    "median_B4_oracle": 0.735,
+    "median_hybriddqr": 0.5479,
+    "n_levels": 226
+  },
+  "per_dataset": {
+    "Bank": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 10,
+        "skip": 7
+      },
+      "hybriddqr_ge_b1_rate": 1.0,
+      "median_B1": 0.0147,
+      "median_B2": 0.0086,
+      "median_B3": 0.0147,
+      "median_B4_oracle": 0.0409,
+      "median_hybriddqr": 0.0147,
+      "n_levels": 17,
+      "task": "clustering"
+    },
+    "Cars": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 16,
+        "skip": 14
+      },
+      "hybriddqr_ge_b1_rate": 0.8,
+      "median_B1": 0.8852,
+      "median_B2": 0.9004,
+      "median_B3": 0.9191,
+      "median_B4_oracle": 0.9464,
+      "median_hybriddqr": 0.9313,
+      "n_levels": 30,
+      "task": "regression"
+    },
+    "Contraceptive": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "repair": 1,
+        "robust": 15,
+        "skip": 13
+      },
+      "hybriddqr_ge_b1_rate": 0.897,
+      "median_B1": 0.4348,
+      "median_B2": 0.5118,
+      "median_B3": 0.4739,
+      "median_B4_oracle": 0.6066,
+      "median_hybriddqr": 0.4957,
+      "n_levels": 29,
+      "task": "classification"
+    },
+    "Covertype": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 11,
+        "skip": 7
+      },
+      "hybriddqr_ge_b1_rate": 1.0,
+      "median_B1": 0.1903,
+      "median_B2": 0.1889,
+      "median_B3": 0.1903,
+      "median_B4_oracle": 0.3318,
+      "median_hybriddqr": 0.1903,
+      "n_levels": 18,
+      "task": "clustering"
+    },
+    "Credit": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "repair": 1,
+        "robust": 16,
+        "skip": 12
+      },
+      "hybriddqr_ge_b1_rate": 0.414,
+      "median_B1": 0.6742,
+      "median_B2": 0.9004,
+      "median_B3": 0.6329,
+      "median_B4_oracle": 0.9122,
+      "median_hybriddqr": 0.648,
+      "n_levels": 29,
+      "task": "classification"
+    },
+    "Houses": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 17,
+        "skip": 13
+      },
+      "hybriddqr_ge_b1_rate": 0.533,
+      "median_B1": 0.7934,
+      "median_B2": 0.8767,
+      "median_B3": 0.7829,
+      "median_B4_oracle": 0.8858,
+      "median_hybriddqr": 0.8309,
+      "n_levels": 30,
+      "task": "regression"
+    },
+    "IMDB": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 17,
+        "skip": 12
+      },
+      "hybriddqr_ge_b1_rate": 0.759,
+      "median_B1": 0.2352,
+      "median_B2": 0.3608,
+      "median_B3": 0.4791,
+      "median_B4_oracle": 0.4791,
+      "median_hybriddqr": 0.4791,
+      "n_levels": 29,
+      "task": "regression"
+    },
+    "Letter": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 8,
+        "skip": 7
+      },
+      "hybriddqr_ge_b1_rate": 1.0,
+      "median_B1": 0.3417,
+      "median_B2": 0.3493,
+      "median_B3": 0.3417,
+      "median_B4_oracle": 0.353,
+      "median_hybriddqr": 0.3417,
+      "n_levels": 15,
+      "task": "clustering"
+    },
+    "Telco": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "repair": 1,
+        "robust": 16,
+        "skip": 12
+      },
+      "hybriddqr_ge_b1_rate": 0.276,
+      "median_B1": 0.7169,
+      "median_B2": 0.7903,
+      "median_B3": 0.6833,
+      "median_B4_oracle": 0.8108,
+      "median_hybriddqr": 0.7042,
+      "n_levels": 29,
+      "task": "classification"
     }
   },
-  "regression": {
-    "n_total": 29,
-    "decisions": {
-      "skip": 14,
-      "robust": 15
+  "per_task": {
+    "classification": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "repair": 3,
+        "robust": 47,
+        "skip": 37
+      },
+      "hybriddqr_ge_b1_rate": 0.529,
+      "median_B1": 0.5819,
+      "median_B2": 0.7903,
+      "median_B3": 0.59,
+      "median_B4_oracle": 0.8116,
+      "median_hybriddqr": 0.6066,
+      "n_levels": 87
     },
-    "n_ge_b1": 23,
-    "n_eq_b4": 10,
-    "avg": {
-      "hybriddqr_metric": 0.6254,
-      "B1_no_repair_default": 0.6757,
-      "B2_full_repair_default": 0.7239,
-      "B3_no_repair_best_robust": 0.6225,
-      "B4_oracle": 0.7614
-    }
-  },
-  "clustering": {
-    "n_total": 29,
-    "decisions": {
-      "skip": 13,
-      "robust": 16
+    "clustering": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 29,
+        "skip": 21
+      },
+      "hybriddqr_ge_b1_rate": 1.0,
+      "median_B1": 0.0432,
+      "median_B2": 0.0866,
+      "median_B3": 0.0432,
+      "median_B4_oracle": 0.1698,
+      "median_hybriddqr": 0.0432,
+      "n_levels": 50
     },
-    "n_ge_b1": 29,
-    "n_eq_b4": 3,
-    "avg": {
-      "hybriddqr_metric": 0.0195,
-      "B1_no_repair_default": 0.0195,
-      "B2_full_repair_default": 0.0111,
-      "B3_no_repair_best_robust": 0.0195,
-      "B4_oracle": 0.0467
+    "regression": {
+      "b2_catastrophic_failures": 0,
+      "decision_counts": {
+        "robust": 50,
+        "skip": 39
+      },
+      "hybriddqr_ge_b1_rate": 0.697,
+      "median_B1": 0.4834,
+      "median_B2": 0.6135,
+      "median_B3": 0.7981,
+      "median_B4_oracle": 0.84,
+      "median_hybriddqr": 0.8196,
+      "n_levels": 89
     }
   }
 }

@@ -21,7 +21,7 @@ import pandas as pd
 from sklearn.experimental import enable_iterative_imputer  # noqa: F401  (registers IterativeImputer)
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.model_selection import cross_val_predict
 
 
@@ -92,8 +92,14 @@ def repair_completeness(df: pd.DataFrame, metadata_entry: dict) -> pd.DataFrame:
             df[column] = df[column].replace(placeholder, np.nan)
 
     if numerical_cols and df[numerical_cols].isna().any().any():
+        # keep_empty_features=True: at extreme pollution a numerical column can end up 100%
+        # missing, and IterativeImputer's default behaviour is to drop such columns from its
+        # output entirely -- fewer columns come back than went in, which crashes the
+        # assignment below ("Columns must be same length as key"). Keeping the column (filled
+        # with the initial per-column mean/constant strategy, same as every other column's
+        # first imputation pass) preserves that pollution level instead of skipping it.
         imputer = IterativeImputer(estimator=ExtraTreesRegressor(n_estimators=20, random_state=42, n_jobs=1),
-                                    random_state=42, max_iter=5)
+                                    random_state=42, max_iter=5, keep_empty_features=True)
         df[numerical_cols] = imputer.fit_transform(df[numerical_cols])
 
     for column in categorical_cols:
@@ -162,7 +168,12 @@ def repair_target_accuracy(df: pd.DataFrame, metadata_entry: dict, task: str) ->
     # regression
     y = df[target].astype(float)
     try:
-        preds = cross_val_predict(LinearRegression(), X, y, cv=5, n_jobs=1)
+        # Ridge, not plain LinearRegression: unregularized OLS on one-hot-encoded
+        # categorical features can be near-singular (IMDB's design matrix in particular),
+        # producing wildly wrong predictions -- which this function then uses to
+        # "correct" perfectly good target values, actively corrupting the data (observed:
+        # a 0-10 rating column replaced with values in the tens of millions).
+        preds = cross_val_predict(Ridge(), X, y, cv=5, n_jobs=1)
         residuals = (y - preds).abs()
         threshold = residuals.mean() + 3 * residuals.std(ddof=0)
         outliers = residuals > threshold
