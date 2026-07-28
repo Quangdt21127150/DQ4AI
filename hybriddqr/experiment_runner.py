@@ -152,8 +152,10 @@ def load_dataset(ds_name: str, metadata_entry: dict):
     # matches), rather than keying off ds_name/metadata_key, since letter.arff's per-seed
     # sample files share one base metadata entry the same way bank/covtype's do.
     rename = COLUMN_RENAME_FIX.get("letter.arff", {})
-    numerical_cols = [rename.get(c, c) if c not in df.columns else c
-                      for c in metadata_entry.get("numerical_cols", [])]
+    numerical_cols = [
+        rename.get(c, c) if c not in df.columns else c
+        for c in metadata_entry.get("numerical_cols", [])
+    ]
     if numerical_cols != metadata_entry.get("numerical_cols", []):
         metadata_entry = dict(metadata_entry, numerical_cols=numerical_cols)
     declared = [rename.get(c, c) if c not in df.columns else c for c in declared]
@@ -262,6 +264,7 @@ def run_dimension(
     metadata_entry: dict,
     ds_name: str,
     theta_fraction: float = 0.9,
+    seed=None,
 ) -> list:
     polluter_cls = DIMENSION_POLLUTERS[dimension]
     poll_df, poll_metadata, discr_col = prepare_for_pollution(
@@ -273,9 +276,11 @@ def run_dimension(
         ds_name: poll_metadata,
     }
     all_polluters = polluter_cls.configure(metadata_for_configure, poll_df, ds_name)
-    first_seed = metadata_for_configure["random_seeds"][0]
+    active_seed = (
+        seed if seed is not None else metadata_for_configure["random_seeds"][0]
+    )
     selected = pick_levels(
-        all_polluters, first_seed, n_levels=N_LEVELS_OVERRIDE.get(task, N_LEVELS)
+        all_polluters, active_seed, n_levels=N_LEVELS_OVERRIDE.get(task, N_LEVELS)
     )
 
     clean_perf = clean_reference_performance(task, df, metadata_entry)

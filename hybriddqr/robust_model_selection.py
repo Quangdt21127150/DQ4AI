@@ -89,6 +89,210 @@ _clustering_experiments.GaussianMixture = _FastGaussianMixture
 
 from clustering.experiments import KMeansExperiment, GaussianMixtureExperiment
 
+# --- Optional fixes for the previously-excluded TabNet / Pytorch* / AutoencoderExperiment
+# families (see module docstring above for why they were excluded). These monkeypatches make
+# each class safe to instantiate on this machine, but are deliberately NOT wired into
+# MODEL_REGISTRY/ROBUSTNESS_RANKING below -- adding them there would change RMS's candidate
+# pool and require a full rerun to take effect, which is out of scope for now. Kept here so a
+# future run can opt in by importing e.g. _SafeMultilayerPerceptronPytorchExperiment instead
+# of the sklearn-only classes above.
+
+import torch.utils.data as _torch_data
+import classification.experiments as _classification_experiments
+import regression.experiments as _regression_experiments
+
+
+class _SafeDataLoader(_torch_data.DataLoader):
+    """Every Pytorch*Experiment class in classification/experiments.py and
+    regression/experiments.py (KNN, MLP x3, SVM) hardcodes num_workers=36 in its DataLoader
+    construction. On this Windows machine (12 cores) DataLoader workers are spawned via the
+    'spawn' start method (no fork on Windows), which re-imports the whole module per worker;
+    36 workers x 2 loaders (train+test) x pin_memory=True x prefetch_factor=2 reliably hung
+    indefinitely in this session -- an oversubscription/resource-contention deadlock, not a
+    crash. Forcing num_workers=0 (single-process loading) removes the deadlock; these
+    datasets are at most ~15k rows so the throughput cost is negligible."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs["num_workers"] = 0
+        kwargs.pop("prefetch_factor", None)  # torch raises if this is set together with num_workers=0
+        kwargs.pop("persistent_workers", None)
+        super().__init__(*args, **kwargs)
+
+
+_classification_experiments.DataLoader = _SafeDataLoader
+_regression_experiments.DataLoader = _SafeDataLoader
+
+# Pre-existing Root code bug, unrelated to the DataLoader deadlock above and not something
+# the smoke test's other failures were expected to reveal: PytorchMLPClassifier.__init__
+# requires `random_state` as its first positional argument, but PytorchMLPExperiment.__init__
+# (classification/experiments.py) instantiates it with only keyword args (input_dim=...,
+# hidden_layer_sizes=..., activation=..., output_dim=...) and never passes random_state --
+# every call raises "missing 1 required positional argument: 'random_state'" before any
+# DataLoader or training code runs. The class already calls set_random_seed(42) internally
+# regardless of what's passed, so random_state is accepted but unused -- giving it a default
+# makes the existing call site work without changing behavior.
+#
+# This must patch __init__ IN PLACE on the existing class object rather than subclassing and
+# reassigning classification.experiments.PytorchMLPClassifier to the subclass (the same
+# mistake the TabNet fix above avoids for a different reason). PytorchMLPClassifier.__init__
+# itself calls `super(PytorchMLPClassifier, self).__init__()` -- a lookup of the *global name*
+# PytorchMLPClassifier in this module's own namespace at call time, not a closure over the
+# class object. Reassigning that module attribute to a subclass makes this internal call
+# resolve super(<the subclass>, self), which walks the MRO to the ORIGINAL class and re-invokes
+# ITS __init__ with zero arguments -- reproducing the exact "missing random_state and
+# input_dim" crash one level down. Patching the method in place leaves the module's
+# PytorchMLPClassifier name pointing at the original, unrenamed class, so that internal
+# super() call still resolves to nn.Module as intended.
+_original_pytorch_mlp_classifier_init = _classification_experiments.PytorchMLPClassifier.__init__
+
+
+def _patched_pytorch_mlp_classifier_init(self, random_state=42, *args, **kwargs):
+    return _original_pytorch_mlp_classifier_init(self, random_state, *args, **kwargs)
+
+
+_classification_experiments.PytorchMLPClassifier.__init__ = _patched_pytorch_mlp_classifier_init
+
+from pytorch_tabnet.tab_model import TabNetClassifier as _TabNetClassifier, TabNetRegressor as _TabNetRegressor
+
+
+def _safe_tabnet_batch_kwargs(n_rows: int, kwargs: dict) -> dict:
+    """pytorch_tabnet's fit() defaults to batch_size=1024, virtual_batch_size=128,
+    drop_last=True. Two crash patterns are known independent of the num_workers deadlock
+    above: (1) if n_rows < batch_size, drop_last=True discards the entire dataset, leaving
+    zero batches; (2) virtual_batch_size must evenly divide batch_size (Ghost Batch Norm),
+    else pytorch_tabnet raises directly. This shrinks batch_size to fit the actual dataset
+    and collapses virtual_batch_size to match when it wouldn't divide evenly, avoiding both.
+    NOTE: this session's earlier "TabNet internal RuntimeError" was not re-isolated to one
+    exact cause before this fix was written -- treat this as a defensive guard against the
+    two known small-batch failure modes above, not a verified reproduction of that error."""
+    kwargs = dict(kwargs)
+    batch_size = min(kwargs.get("batch_size", 1024), max(1, n_rows))
+    virtual_batch_size = kwargs.get("virtual_batch_size", 128)
+    if virtual_batch_size > batch_size or batch_size % virtual_batch_size != 0:
+        virtual_batch_size = batch_size
+    kwargs["batch_size"] = batch_size
+    kwargs["virtual_batch_size"] = virtual_batch_size
+    return kwargs
+
+
+# Patch fit() in place on the ORIGINAL classes rather than subclassing + swapping the module
+# attribute. Root code checks `self.model.__class__.__name__ == 'TabNetClassifier'` (and
+# 'TabNetRegressor') to decide whether to convert X/y to .values before calling fit() --
+# subclassing would rename the class and silently break that string check, sending a raw
+# pandas DataFrame into pytorch_tabnet and crashing with "Pandas DataFrame are not supported"
+# (caught by the smoke test below). Patching the bound method preserves the class identity.
+_original_tabnet_classifier_fit = _TabNetClassifier.fit
+_original_tabnet_regressor_fit = _TabNetRegressor.fit
+
+
+def _safe_tabnet_classifier_fit(self, X_train, y_train, *args, **kwargs):
+    kwargs = _safe_tabnet_batch_kwargs(len(X_train), kwargs)
+    return _original_tabnet_classifier_fit(self, X_train, y_train, *args, **kwargs)
+
+
+def _safe_tabnet_regressor_fit(self, X_train, y_train, *args, **kwargs):
+    kwargs = _safe_tabnet_batch_kwargs(len(X_train), kwargs)
+    return _original_tabnet_regressor_fit(self, X_train, y_train, *args, **kwargs)
+
+
+_TabNetClassifier.fit = _safe_tabnet_classifier_fit
+_TabNetRegressor.fit = _safe_tabnet_regressor_fit
+
+import clustering.experiments as _clustering_experiments_mod
+from clustering.experiments import AutoencoderExperiment as _AutoencoderExperiment
+
+
+class _FastAutoencoderExperiment(_AutoencoderExperiment):
+    """AutoencoderExperiment.run() (clustering/experiments.py) hardcodes 200 training epochs
+    with no GPU available on this machine (torch.cuda.is_available() is False here), and its
+    own DataLoaders already use num_workers=0 by default -- so unlike the Pytorch*Experiment
+    classes above, this one was never at deadlock risk. Its problem is pure wall-clock cost:
+    200 epochs x every pollution level x every seed is not tractable in the time available.
+    Since the epoch count is a literal inside run() rather than a constructor parameter, the
+    only way to change it without editing Root code is to override the whole method; the body
+    below is otherwise identical to the original, just with the epoch count parameterized and
+    lowered. 30 epochs is a reconstruction-loss autoencoder on a small dense net (2D embedding
+    bottleneck) -- expected to have converged well before then, but this has not been verified
+    against the original 200-epoch results, so treat any resulting numbers as approximate
+    until spot-checked against a 200-epoch run."""
+
+    N_EPOCHS = 30
+
+    def run(self) -> dict:
+        import logging as _logging
+        from copy import deepcopy as _deepcopy
+
+        import numpy as _np
+        import pandas as _pd
+        import torch as _torch
+        from torch import nn as _nn, optim as _optim
+        from torch.utils.data import DataLoader as _DataLoader, random_split as _random_split
+        from tqdm import tqdm as _tqdm
+
+        _logging.info(f"Running: {self.name} experiment (fast, {self.N_EPOCHS} epochs) ...")
+
+        dataset = _clustering_experiments_mod.CustomDataset(self.test, self._target_col)
+        trainsize = int(0.8 * len(dataset))
+        trainset, testset = _random_split(dataset, [trainsize, len(dataset) - trainsize])
+
+        trainloader = _DataLoader(trainset, batch_size=128, shuffle=True)
+        testloader = _DataLoader(testset, batch_size=128, shuffle=False)
+
+        optimizer = _optim.Adam(self.model.parameters(), lr=0.003)
+        criterion = _nn.MSELoss()
+
+        loss_per_batch = []
+        running_loss = 0.0
+        i = 0
+        pbar = _tqdm(range(self.N_EPOCHS))
+
+        self.model.train()
+        for epoch in pbar:
+            pbar.set_description(f"Epoch {epoch:03d}: Loss: {_np.sqrt(running_loss / (i + 1)):05f}")
+            running_loss = 0.0
+            for i, (inputs, _label) in enumerate(trainloader):
+                inputs = inputs.to(self.device)
+                optimizer.zero_grad()
+                _, outputs = self.model(inputs.float())
+                loss = criterion(outputs, inputs.float())
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+            loss_per_batch.append(running_loss / (i + 1))
+
+        self.model.eval()
+        with _torch.no_grad():
+            inputs, _labels = next(iter(testloader))
+            inputs = inputs.to(self.device)
+            _, outputs = self.model(inputs.float())
+            _logging.info(
+                f"RMSE Training: {_np.sqrt(loss_per_batch[-1])}, "
+                f"Test: {_np.sqrt(criterion(outputs, inputs.float()).detach().cpu().numpy())}"
+            )
+
+        fullloader = _DataLoader(dataset, batch_size=128, shuffle=False)
+        encoded_outputs = []
+        with _torch.no_grad():
+            for inputs, _label in fullloader:
+                inputs = inputs.to(self.device)
+                optimizer.zero_grad()
+                encoded, _ = self.model(inputs.float())
+                encoded_outputs.append(encoded)
+        encoded_result = _torch.cat(encoded_outputs, dim=0).cpu().numpy()
+
+        encoded_data = _pd.DataFrame(encoded_result)
+        encoded_data[self._target_col] = self.test[self._target_col]
+
+        adapted_metadata = _deepcopy(self.metadata)
+        adapted_metadata["categorical_cols"] = []
+        adapted_metadata["numerical_cols"] = encoded_data.columns.tolist()
+
+        clustering_exp = GaussianMixtureExperiment(None, encoded_data, adapted_metadata)
+        return clustering_exp.run(verbose=False)
+
+
+_clustering_experiments_mod.AutoencoderExperiment = _FastAutoencoderExperiment
+
 CLASSIFICATION_MODELS = {
     "ensemble": GradientBoostingClassifierExperiment,
     "linear": LogRegExperiment,
