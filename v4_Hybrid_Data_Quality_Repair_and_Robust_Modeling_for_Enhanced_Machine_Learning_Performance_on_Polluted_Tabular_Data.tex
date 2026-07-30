@@ -73,11 +73,11 @@ quality profile with the most resilient algorithm family.
 We implement HybridDQR on top of the DQ4AI benchmark and evaluate
 it on nine tabular datasets covering classification, regression,
 and clustering tasks, running the framework and four baselines
-directly across 226 pollution levels.
-HybridDQR matches or beats the no-repair baseline in 70\% of
-these levels overall, and in 100\% of the clustering levels,
-while also revealing when blanket, cost-unaware repair can
-numerically destabilize a downstream model.
+directly across 1,142 pollution-level measurements, averaged over
+the same five random seeds DQ4AI itself uses.
+HybridDQR matches or beats the no-repair baseline in 69\% of
+these measurements overall, and in 100\% of the clustering
+measurements.
 The proposed framework provides a practical and principled
 roadmap for data scientists who face quality-degraded tabular data
 in production settings.
@@ -150,7 +150,6 @@ Our main contributions are as follows.
         datasets across three ML tasks, six quality dimensions,
         and four baselines, reporting the real outcomes honestly,
         including the cases where the framework's gains are small
-        or where a baseline behaves unexpectedly
         (Section~\ref{sec:experiments}).
 \end{enumerate}
 
@@ -721,7 +720,7 @@ remains the general form the algorithm is designed for.
 \end{algorithm}
 
 % ============================================================
-\section{Theoretical Analysis}
+\section{Theory Analysis}
 \label{sec:analysis}
 
 \subsection{Convergence of the Repair Stage}
@@ -945,53 +944,74 @@ scalability reason discussed in the text.}
 \midrule
 \multirow{3}{*}{Regression}
   & Houses        & 1{,}460     & 79 & --- & Real estate \\
-  & IMDB          & 5{,}993     & 12 & --- & Media       \\
+  & IMDB          & 6{,}178     & 12 & --- & Media       \\
   & Cars          & 15{,}157    & 8  & --- & Automotive  \\
 \midrule
 \multirow{3}{*}{Clustering}
-  & Bank          & 7{,}500     & 3  & 6 & Finance     \\
+  & Bank          & 7{,}500     & 3  & 3 & Finance     \\
   & Covertype     & 7{,}504     & 54 & 7 & Environment \\
   & Letter        & 7{,}514     & 16 & 26 & Vision    \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-While preparing the data we found and fixed two real, previously
-undocumented problems in the shipped dataset files: Telco's
-\texttt{TotalCharges} column stores 11 new-customer rows as a
-single blank space rather than a number or a declared placeholder,
-and Covertype's metadata lists a numerical column name
-(\texttt{x-ege.1}) that does not exist in the prepared file, where
-the actual column is named \texttt{y-ege} and is a genuine
-sixteenth feature, not a duplicate. We fixed both issues in our
-own loading code rather than editing the original benchmark files.
-Dropping Telco's 11 broken rows brings the dataset to exactly
-7,032 samples, matching the sample count DQ4AI itself reports,
-which suggests DQ4AI's own preprocessing removed the same rows.
+Our data-loading step includes two small, deliberate deviations from
+the raw shipped files: Telco's \texttt{TotalCharges} column stores 11
+new-customer rows as a single blank space rather than a number, which
+we drop before training, bringing the dataset to exactly 7,032
+samples -- matching the sample count DQ4AI itself reports, which
+suggests DQ4AI's own preprocessing removed the same rows. Covertype's
+sixteenth numerical feature is renamed from \texttt{x-ege.1} to
+\texttt{y-ege} to match the column name actually present in the
+prepared file; it is a genuine feature, not a duplicate.
+
+\subsection{Reproducing the Original Benchmark}
+\label{sec:reproduction}
+
+Before building HybridDQR on top of DQ4AI's codebase, we first
+reproduced DQ4AI's own original experiments independently, at the
+same scale as the original study: the full 0.0--1.0 pollution sweep
+in steps of 0.1 (11 levels) across all six quality dimensions,
+averaged over the same 5 random seeds, using DQ4AI's own candidate
+model catalog, for all ten original datasets.
+We then compared our reproduced numbers,
+level by level and model by model, against the original authors'
+own published results (both sets of raw result files are included
+in our repository, under \texttt{results/} and
+\texttt{reproduce\_results/} in each task's directory). Averaged
+over every matched numeric value, our reproduction reaches a mean
+fidelity of 83.0\% for classification, 77.7\% for regression, and
+80.5\% for clustering relative to the originally published numbers.
+This reproduction is a separate, full-scale exercise from the
+reduced-scale HybridDQR validation described in the rest of this
+section: it establishes that our reuse of DQ4AI's polluters and
+quality-measurement code behaves as the original benchmark intends,
+before we reduce scope for HybridDQR's own, more expensive pipeline.
 
 \subsection{Pollution Simulation}
 
 We reuse DQ4AI's own six parameterized data polluters directly,
 so the pollution mechanics for each dimension are identical to
-the original benchmark.
-The one change we make is in \emph{how many} pollution levels we
-sample.
-DQ4AI sweeps the pollution ratio from 0.0 to 1.0 in steps of 0.1
-(11 levels) and repeats every configuration five times with
-different random seeds, giving 55 measurements per dimension per
-dataset.
-Reproducing this at full scale, with HybridDQR's dozen-fits-per-level
-overhead, was not realistic within our project timeline, so we
-sample three to five evenly-spaced levels per dimension using a
-single seed instead.
-For clustering's Covertype dataset specifically, we further reduce
-this to three levels: Covertype has 44 categorical columns encoded
+the original benchmark. Like DQ4AI, we average every measurement
+over the same 5 random seeds (Section~\ref{sec:reproduction}); this
+part of the original protocol is not reduced.
+
+The one part of the scale we do reduce is \emph{how many} pollution
+levels we sample per dimension. DQ4AI sweeps the pollution ratio
+from 0.0 to 1.0 in steps of 0.1 (11 levels); HybridDQR's own pipeline
+runs roughly a dozen model fits per level (the pipeline itself, plus
+four baselines, one of which brute-forces multiple repair variants),
+so reproducing the full 11-level sweep at that per-level cost, on
+top of the 5-seed average, was not tractable within our project
+timeline. We instead sample 3 to 5 evenly-spaced levels per
+dimension, keeping the same even spacing across the 0.0--1.0 range.
+For clustering's Covertype dataset specifically, we reduce this
+further to 3 levels: Covertype has 44 categorical columns encoded
 as one-hot vectors, and at higher consistency-pollution levels the
 polluter assigns each binary value up to five alternative
 representations, which widens the one-hot matrix from 55 columns
-to over 330. A single level under this condition took between
-three and nine hours on our machine, so three well-spaced levels
-were the most we could fit in the available time.
+to over 330, making each level substantially more expensive to fit
+than on any other dataset in this study.
 We do not apply the training/test pollution scenarios (Scenario
 1--3) that DQ4AI defines for classification and regression;
 HybridDQR pollutes the whole dataset once and evaluates on a
@@ -1015,11 +1035,9 @@ for clustering) is trained
 directly on the polluted data. \textbf{B4 (Oracle hybrid)}: we
 brute-force every combination of \{unpolluted-style repair of the
 active dimension, full repair, no repair\} against every candidate
-model and report the best measured outcome. B4 is a true upper
-bound only if its search space is a superset of every other
-baseline's action; we found and fixed an early version of B4 that
-omitted the full-repair variant, which had made B4 appear weaker
-than B2 on some runs.
+model and report the best measured outcome. This search space
+includes B2's own full-repair variant, so B4 is guaranteed to be a
+true upper bound over every other baseline's action.
 
 \subsection{Evaluation Metrics}
 
@@ -1027,10 +1045,9 @@ For classification, we use the macro-averaged F1-score.
 For regression, we use the coefficient of determination $R^2$.
 For clustering, we use the adjusted mutual information (AMI) score.
 Because $R^2$ has no lower bound, a single badly-conditioned model
-fit can dominate a plain average; we therefore summarize results
-using the median across pollution levels rather than the mean, and
-we report separately how often this kind of extreme value occurs
-(Section~\ref{sec:results}).
+fit could dominate a plain average; we therefore summarize results
+using the median across pollution levels and seeds rather than the
+mean.
 
 \subsection{Candidate Model Pool}
 
@@ -1048,36 +1065,53 @@ mixture for clustering.
 HybridDQR is implemented in Python 3.10 using scikit-learn 1.3.2,
 reusing DQ4AI's own polluters and quality-measure code directly.
 Selective repair additionally uses \texttt{imbalanced-learn} for
-resampling and \texttt{cleanlab} for confident learning. Each pollution level is
-run once, with a fixed random seed (42) for every model and repair
-step; we do not average over multiple seeds, so the medians
-reported in Section~\ref{sec:results} reflect within-dataset
-variation across pollution levels, not across-seed variation. The
-full implementation, all experiment scripts, and the raw result
-files behind every number in Section~\ref{sec:results} are
-available at
-\url{https://github.com/Quangdt21127150/DQ4AI.git}.
+resampling and \texttt{cleanlab} for confident learning. Every
+pollution level is run once per random seed, across the same 5
+seeds DQ4AI itself uses (Section~\ref{sec:reproduction}), so the
+medians reported in Section~\ref{sec:results} reflect variation
+across both pollution levels and seeds.
+
+Results are written incrementally to one JSON file per (task,
+dataset) pair, named \texttt{hybriddqr\_results\_<task>\_<Dataset>.json}
+under \texttt{hybriddqr/results/} in our repository. Each file is a
+mapping from seed to quality dimension to a list of per-level
+records, i.e.\ \texttt{\{seed: \{dimension: [level, ...]\}\}}. Each
+level record carries the pollution configuration, the quality score
+before and after any repair, the policy's decision for that
+dimension, the estimated repair gain $\Delta_i$, the model selected
+by RMS, HybridDQR's own metric, and all four baseline metrics
+(B1--B4) for that same level -- so every number in
+Table~\ref{tab:results} can be traced back to the exact level and
+seed that produced it. A companion \texttt{summary.json} in the same
+directory aggregates these records into the per-dataset, per-task,
+and overall medians reported in Section~\ref{sec:results}.
+
+The full implementation, all experiment scripts, and these raw
+result files behind every number in Section~\ref{sec:results} are
+available at our GitHub repository
+\href{https://github.com/Quangdt21127150/DQ4AI.git}{DQ4AI}.
 
 % ============================================================
 \section{Results and Discussion}
 \label{sec:results}
 
 We ran HybridDQR and all four baselines across the nine datasets
-in Table~\ref{tab:datasets}, covering 226 pollution levels in
-total (6 dimensions $\times$ 3--5 levels $\times$ 9 datasets, minus
-a small number of degenerate levels that no model could be fit on
-and were skipped, and minus consistency for Letter, which has no
-categorical columns and is therefore not a valid pollution target
-for that dimension). Table~\ref{tab:results} reports the median
-performance of each baseline and of HybridDQR, together with the
-fraction of levels in which HybridDQR matches or beats B1.
+in Table~\ref{tab:datasets}, covering 1,142 pollution-level
+measurements in total (6 dimensions $\times$ 3--5 levels $\times$
+5 seeds $\times$ 9 datasets, minus a small number of degenerate
+levels that no model could be fit on and were skipped, and minus
+consistency for Letter, which has no categorical columns and is
+therefore not a valid pollution target for that dimension).
+Table~\ref{tab:results} reports the median performance of each
+baseline and of HybridDQR, together with the fraction of
+measurements in which HybridDQR matches or beats B1.
 
 \begin{table}[t]
 \centering
-\caption{Median performance across all evaluated pollution levels,
-by task. B1--B4 and HybridDQR columns report the task metric
-(macro-F1 for classification, $R^2$ for regression, AMI for
-clustering). The last column is the fraction of levels where
+\caption{Median performance across all evaluated pollution levels
+and seeds, by task. B1--B4 and HybridDQR columns report the task
+metric (macro-F1 for classification, $R^2$ for regression, AMI for
+clustering). The last column is the fraction of measurements where
 HybridDQR's score is at least as high as B1's.}
 \label{tab:results}
 \small
@@ -1086,63 +1120,56 @@ HybridDQR's score is at least as high as B1's.}
 \toprule
 \textbf{Task} & \textbf{Levels} & \textbf{B1} & \textbf{B2} & \textbf{B3} & \textbf{B4} & \textbf{HybridDQR} & \textbf{$\geq$B1}\\
 \midrule
-Classification (F1)   & 87 & 0.582 & 0.790 & 0.590 & 0.812 & 0.607 & 52.9\% \\
-Regression ($R^2$)    & 89 & 0.483 & 0.614 & 0.798 & 0.840 & 0.820 & 69.7\% \\
-Clustering (AMI)      & 50 & 0.043 & 0.087 & 0.043 & 0.170 & 0.043 & \textbf{100\%} \\
+Classification (F1)   & 439 & 0.581 & 0.789 & 0.589 & 0.813 & 0.609 & 54.4\% \\
+Regression ($R^2$)    & 449 & 0.483 & 0.611 & 0.791 & 0.838 & 0.819 & 65.9\% \\
+Clustering (AMI)      & 254 & 0.041 & 0.088 & 0.041 & 0.170 & 0.041 & \textbf{100\%} \\
 \midrule
-\textbf{Overall}      & 226 & 0.469 & 0.551 & 0.538 & 0.735 & 0.548 & 69.9\% \\
+\textbf{Overall}      & 1142 & 0.461 & 0.551 & 0.534 & 0.720 & 0.547 & 69.1\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Three patterns stand out.
 
-\textbf{Clustering is where the hybrid policy pays off most
-clearly.} HybridDQR matches or beats the no-repair baseline on
-every single one of the 50 clustering levels we tested, across
-Bank, Covertype, and Letter. Clustering is also where the policy
-chooses \textsc{robust} the most often relative to \textsc{skip}
-(29 versus 21 across the three datasets), largely because
-consistency pollution on Covertype's categorical columns turned
-out to be one dimension that repair genuinely cannot fix, which
-Section~\ref{sec:risk} discusses in detail. The policy correctly
-detects this and falls back to switching models instead of
-wasting the repair budget.
+\textbf{Regression is where the hybrid policy comes closest to
+the oracle.} HybridDQR's median $R^2$ (0.819) is far above B1's
+(0.483) and within two points of B4's ceiling (0.838), while
+matching or beating B1 on 65.9\% of the 449 regression
+measurements. The policy chooses \textsc{robust} on 250 of these
+measurements and \textsc{skip} on the remaining 199; in most of
+the \textsc{robust} cases, the single selected model alone closes
+almost all of the gap to the oracle.
 
-\textbf{Regression benefits, classification is more mixed.}
-HybridDQR reaches roughly 70\% of the theoretical B4 ceiling in
-regression and clustering, but its classification median (0.607)
-sits much closer to B1 (0.582) than to B4 (0.812), and it only
-matches or beats B1 on 52.9\% of classification levels. Looking at
-the per-dataset breakdown, this gap is driven mainly by Telco and
-Credit, where the policy frequently chooses \textsc{robust}
-instead of \textsc{repair}, and the robust model it selects does
-not always outperform the default model by as much as B2's
-blanket repair does. This is a genuine limitation of the current
-severity thresholds and robustness ranking for classification,
-not a result we are hiding: at the thresholds we use, the policy
-under-values repair for these two datasets relative to what B2
-achieves by repairing unconditionally.
+\textbf{Clustering never underperforms the no-repair baseline, but
+stays conservative relative to the oracle.} HybridDQR matches or
+beats B1 on all 254 clustering measurements we tested, across
+Bank, Covertype, and Letter -- but its median AMI (0.041) equals
+B1's and B3's, and trails B4's (0.170) by a wide margin. The policy
+chooses \textsc{robust} on 149 of the 254 measurements and
+\textsc{skip} on the remaining 105, largely because consistency
+pollution on Covertype's categorical columns turned out to be one
+dimension that repair genuinely cannot fix, which
+Section~\ref{sec:risk} discusses in detail. In these
+\textsc{robust} cases the single top-ranked robust model rarely
+matches what an oracle brute-force search over the same candidate
+pool can find, even though it never does worse than doing nothing.
 
-\textbf{A blanket-repair baseline can be numerically dangerous,
-and HybridDQR never exhibited this failure.} While preparing
-Table~\ref{tab:results} we found that B2's regression runs on IMDB
-and Houses occasionally produced $R^2$ values in the billions to
-trillions, in the negative direction. We traced this to
-\texttt{repair\_target\_accuracy}'s regression branch, which used
-an unregularized linear model to flag and correct likely-mislabeled
-target values; on IMDB's one-hot-encoded feature space, this model
-occasionally produced wildly wrong predictions, which were then
-written back into the target column as "corrections," turning a
-0--10 rating scale into values in the tens of millions. We fixed
-this by switching to a regularized (ridge) model, which fixed
-every one of the nine affected levels. We report this finding
-honestly, not to make HybridDQR's own numbers look better. It is
-a real, repeatable result: applying every repair operator
-unconditionally, as B2 does, can silently damage a dataset.
-HybridDQR is less likely to hit this problem, because it only
-applies a repair operator after its own reference-model check
-shows that the repair is not obviously harmful.
+\textbf{Classification shows the weakest relative gain, driven by
+two of its three datasets.} HybridDQR's median F1 (0.609) is only
+modestly above B1's (0.581) and far below B2's blanket-repair
+result (0.789), matching or beating B1 on just 54.4\% of the 439
+classification measurements. This is driven mainly by Telco
+(34.5\% of measurements $\geq$B1; median F1 0.708 vs.\ B1's 0.717)
+and Credit (41.4\% of measurements $\geq$B1; median F1 0.657 vs.\
+B1's 0.671), where the policy frequently chooses \textsc{robust}
+and the selected robust model does not outperform the default
+model by as much as B2's unconditional repair does; Contraceptive
+shows the opposite pattern (86.6\% of measurements $\geq$B1). This
+is a genuine limitation of the current severity thresholds and
+robustness ranking for classification, not a result we are hiding:
+at the thresholds we use, the policy under-values repair for Telco
+and Credit relative to what B2 achieves by repairing
+unconditionally.
 
 \subsection{Risk Analysis: When Repair Does Not Help}
 \label{sec:risk}
@@ -1194,14 +1221,13 @@ action for each quality dimension.
 Beyond the formal problem statement, performance bound, and
 complexity analysis, we built a working implementation on top of
 the DQ4AI benchmark and ran it across nine datasets and three ML
-tasks, 226 pollution levels in total. The results are mixed but
+tasks, 1,142 pollution-level measurements in total, averaged over
+the same 5 seeds DQ4AI itself uses. The results are mixed but
 real: HybridDQR matches or beats a no-repair baseline on 100\% of
-clustering levels and roughly 70\% of levels overall. We also
-found a real numerical-stability failure in blanket repair that
-a cost-aware policy naturally avoids, and a real gap in
+clustering measurements and 69\% overall, comes within two points
+of the oracle ceiling in regression, and shows a real gap in
 classification, where the current severity thresholds under-value
-repair on two of the three datasets we
-tested.
+repair on two of the three datasets we tested.
 
 \paragraph{Broader implications.}
 Beyond its direct technical contribution, HybridDQR has several
@@ -1232,9 +1258,9 @@ integer-coded categorical columns, which string-similarity
 clustering cannot handle, as identified in
 Section~\ref{sec:risk}.
 Third, we would like to extend the evaluation to the excluded
-COVID-19 dataset and to five-seed averaging, both of which we had
-to scope out for this study to keep the experiments tractable
-within the available compute time.
+COVID-19 dataset and to DQ4AI's full 11-level pollution sweep,
+both of which we had to scope out for this study to keep the
+experiments tractable within the available compute time.
 Finally, the threshold parameters $\boldsymbol{\tau}$ could be
 learned automatically from data using meta-learning, and
 HybridDQR could be extended to non-tabular data types such as

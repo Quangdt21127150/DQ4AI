@@ -6,12 +6,8 @@ repaired_df`. `apply_repair(dimension, ...)` dispatches to the right one. The *d
 which dimensions to actually repair (cost-benefit gated) lives in `policy.py`, not here --
 this module only implements the mechanics of each repair operator, unconditionally.
 
-Windows note: cleanlab's `find_label_issues` and sklearn's `cross_val_predict` use
-`multiprocessing.Pool` internally, which on Windows requires the calling script to guard its
-entry point with `if __name__ == "__main__":` (spawn-based process creation re-imports the
-main module). Every call here is additionally pinned to `n_jobs=1` to keep repair cheap and
-avoid relying on multiprocessing at all in a module that may be invoked many times per
-pollution level.
+Every `cross_val_predict`/`find_label_issues` call here is pinned to `n_jobs=1`, since this
+module may be invoked many times per pollution level.
 """
 import difflib
 import warnings
@@ -92,12 +88,9 @@ def repair_completeness(df: pd.DataFrame, metadata_entry: dict) -> pd.DataFrame:
             df[column] = df[column].replace(placeholder, np.nan)
 
     if numerical_cols and df[numerical_cols].isna().any().any():
-        # keep_empty_features=True: at extreme pollution a numerical column can end up 100%
-        # missing, and IterativeImputer's default behaviour is to drop such columns from its
-        # output entirely -- fewer columns come back than went in, which crashes the
-        # assignment below ("Columns must be same length as key"). Keeping the column (filled
-        # with the initial per-column mean/constant strategy, same as every other column's
-        # first imputation pass) preserves that pollution level instead of skipping it.
+        # keep_empty_features=True: preserves a numerical column even if it ends up 100%
+        # missing at extreme pollution, filling it via the initial per-column mean/constant
+        # imputation strategy like every other column's first pass.
         imputer = IterativeImputer(estimator=ExtraTreesRegressor(n_estimators=20, random_state=42, n_jobs=1),
                                     random_state=42, max_iter=5, keep_empty_features=True)
         df[numerical_cols] = imputer.fit_transform(df[numerical_cols])
@@ -161,18 +154,15 @@ def repair_target_accuracy(df: pd.DataFrame, metadata_entry: dict, task: str) ->
             predicted_labels = pred_probs.argmax(axis=1)
             classes = np.unique(y.values)
             df.loc[issues, target] = classes[predicted_labels[issues]]
-        except Exception as exc:  # pragma: no cover - defensive: never let repair crash the pipeline
+        except Exception as exc:  # pragma: no cover - defensive: repair should never abort the pipeline
             warnings.warn(f"repair_target_accuracy (classification) skipped: {exc}")
         return df
 
     # regression
     y = df[target].astype(float)
     try:
-        # Ridge, not plain LinearRegression: unregularized OLS on one-hot-encoded
-        # categorical features can be near-singular (IMDB's design matrix in particular),
-        # producing wildly wrong predictions -- which this function then uses to
-        # "correct" perfectly good target values, actively corrupting the data (observed:
-        # a 0-10 rating column replaced with values in the tens of millions).
+        # Ridge, not plain LinearRegression: regularization keeps the fit stable on
+        # one-hot-encoded categorical features, which can otherwise be near-singular.
         preds = cross_val_predict(Ridge(), X, y, cv=5, n_jobs=1)
         residuals = (y - preds).abs()
         threshold = residuals.mean() + 3 * residuals.std(ddof=0)

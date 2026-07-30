@@ -1,8 +1,8 @@
 # HybridDQR
 
-A real, runnable implementation of **HybridDQR** -- the framework proposed in *"Hybrid Data
+A real, runnable implementation of **HybridDQR** -- the framework proposed in _"Hybrid Data
 Quality Repair and Robust Modeling for Enhanced Machine Learning Performance on Polluted
-Tabular Data"*. That paper explicitly ships **no empirical validation** ("we describe a
+Tabular Data"_. That paper explicitly ships **no empirical validation** ("we describe a
 comprehensive experimental protocol **that will be used to validate the framework in
 follow-up empirical work**"; its Table 7 is "**projected**... derived analytically", not
 measured). This package is that follow-up: it builds the paper's three modules on top of
@@ -29,14 +29,14 @@ wrapper, this package calls straight into:
 
 ## Module map (paper section -> file)
 
-| Paper concept | File |
-|---|---|
-| Module 1: Quality-Aware Diagnosis (Def. 1) | `quality_diagnosis.py` |
-| Module 2: Selective Repair (Table 3) | `repair.py` |
+| Paper concept                                             | File                        |
+| --------------------------------------------------------- | --------------------------- |
+| Module 1: Quality-Aware Diagnosis (Def. 1)                | `quality_diagnosis.py`      |
+| Module 2: Selective Repair (Table 3)                      | `repair.py`                 |
 | Module 3: Robust Model Selection (Def. 3, Table 4, Eq. 3) | `robust_model_selection.py` |
-| Hybrid Decision Policy (Def. 4) + Algorithm 1 | `policy.py` |
-| Baselines B1-B4 (Section 8.3) | `baselines.py` |
-| Experimental protocol (Section 8) | `experiment_runner.py` |
+| Hybrid Decision Policy (Def. 4) + Algorithm 1             | `policy.py`                 |
+| Baselines B1-B4 (Section 8.3)                             | `baselines.py`              |
+| Experimental protocol (Section 8)                         | `experiment_runner.py`      |
 
 ## Scope of this validation run (deliberately small)
 
@@ -62,7 +62,7 @@ reliably, while exercising every module's logic on real data:
   any given run the other 5 dimensions are known-by-construction to be at quality 1.0 --
   `quality_diagnosis.py` never needs a from-scratch, ground-truth-free scoring path.
 
-None of this changes the *logic* of HybridDQR being validated -- QAD, the repair operators,
+None of this changes the _logic_ of HybridDQR being validated -- QAD, the repair operators,
 WRS-based model selection, and the hybrid policy all run exactly as specified. It only
 limits how much of the paper's dataset/pollution-level grid gets swept in one pass.
 
@@ -71,7 +71,7 @@ limits how much of the paper's dataset/pollution-level grid gets swept in one pa
 - **Consistency's quality measure needs the `Polluter` instance itself**, not just a
   before/after dataframe pair -- `ConsistentRepresentationPolluter.compute_quality_measure`
   reads `self.new_representations`, built during `pollute()`. `experiment_runner.py`
-  therefore always measures quality by calling `compute_quality_measure` on the *same*
+  therefore always measures quality by calling `compute_quality_measure` on the _same_
   polluter instance that produced the pollution (both for the initial diagnosis and, after
   repair, for re-diagnosis) rather than reimplementing the formula.
 - **Delta_i (Eq. 2, repair benefit estimate)** is measured empirically: the dimension's
@@ -104,7 +104,7 @@ python -m hybriddqr.experiment_runner            # all three, sequentially
 ```
 
 Results are written incrementally (crash-safe, same pattern as DQ4AI's own runners) to
-`hybriddqr/re-results/hybriddqr_results_<task>.json`, one entry per (dimension, pollution
+`hybriddqr/results/hybriddqr_results_<task>.json`, one entry per (dimension, pollution
 level) with the quality profile before/after repair, the policy's decision, the model WRS
 selected, HybridDQR's metric, and all four baselines (B1-B4).
 
@@ -125,6 +125,6 @@ rather than a bug -- averaged over all points, B2 (unconditional full repair) cl
 outperforms HybridDQR there (0.91 vs 0.66 mean F1), which means the default severity
 thresholds `tau_i` (Table 2 of the paper) are, on this dataset, conservative enough to
 leave real repair opportunities on the table as `robust`/`skip` decisions. Clustering shows
-the opposite and arguably more paper-relevant pattern: B2 there is *worse* than B1
+the opposite and arguably more paper-relevant pattern: B2 there is _worse_ than B1
 (0.011 vs 0.020 mean AMI), i.e. unconditional repair actively hurts, which is exactly the
 failure mode HybridDQR's cost-aware policy is designed to avoid.

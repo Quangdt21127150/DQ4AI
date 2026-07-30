@@ -38,13 +38,11 @@ from hybriddqr.policy import run_hybriddqr_pipeline
 from hybriddqr.robust_model_selection import MODEL_REGISTRY, run_model
 
 DATA_DIR = Path("data/clean")
-RESULTS_DIR = Path("hybriddqr/re-results")
+RESULTS_DIR = Path("hybriddqr/results")
 
 TASK_DATASETS = {
-    # COVID (1,025,152 rows) is excluded: at ~12-15 model fits/level (HybridDQR pipeline +
-    # B1-B4 baselines), a single pollution level took 1h45m+ with no result -- multiple days
-    # for one task alone. The other 3 datasets per task already match the paper's Table 2
-    # scope; COVID's exclusion is a disclosed scope reduction, same as covtype's level count.
+    # COVID (1,025,152 rows) is excluded from this validation's scope. The other 3 datasets
+    # per task already match the paper's Table 2 scope.
     "classification": ["SouthGermanCredit.csv", "cmc.data", "TelcoCustomerChurn.csv"],
     "regression": ["vw_prepared.csv", "imdb_prepared.csv", "house_prices_prepared.csv"],
     "clustering": ["bank_2967137.csv", "covtype_2967137.csv", "letter_2967137.arff"],
@@ -102,12 +100,8 @@ DIMENSION_POLLUTERS = {
 DISCRETIZED_DIMENSIONS = {"uniqueness", "class_balance"}
 N_LEVELS = 5
 
-# clustering/covtype_2967137.csv (55 one-hot columns, vs. 4 for bank) makes each KPrototypes/
-# GaussianMixture fit far more expensive than on any other dataset in this validation; at 5
-# levels this task alone was on track to take 20+ hours. 3 levels (low/medium/high
-# pollution) keeps the same evenly-spaced sampling approach at a tractable scale for this
-# one dataset -- classification and regression finished at 5 levels without issue, so they
-# are unaffected.
+# Clustering uses 3 evenly-spaced pollution levels (low/medium/high) instead of 5, to keep
+# the per-dataset cost of KPrototypes/GaussianMixture fits tractable.
 N_LEVELS_OVERRIDE = {"clustering": 3}
 
 
@@ -125,23 +119,22 @@ def load_dataset(ds_name: str, metadata_entry: dict):
     """Read a dataset and keep only the columns metadata.json actually declares
     (categorical_cols + numerical_cols + target). Some prepared CSVs carry extra columns
     metadata.json does not describe (e.g. imdb_prepared.csv has a free-text title column
-    that is neither categorical nor numerical) -- passing those through to a model or
-    one-hot encoder crashes on the undeclared dtype, so they are dropped here once, up
-    front, rather than defensively at every call site.
+    that is neither categorical nor numerical), so they are dropped here once, up front,
+    rather than defensively at every call site.
 
     Declared numerical columns are coerced to numeric, and rows that fail to parse are
     dropped -- e.g. TelcoCustomerChurn.csv's TotalCharges has 11 rows stored as a single
     space (new customers with 0 tenure), which is neither a number nor one of
-    metadata.json's declared placeholders, so every model fit crashes on it otherwise.
-    Dropping these 11 rows brings the dataset to exactly 7032 samples, matching the DQ4AI
-    paper's own reported Telco sample count (Table 2) -- their own preprocessing already
-    excluded these rows before treating the result as the clean baseline.
+    metadata.json's declared placeholders. Dropping these 11 rows brings the dataset to
+    exactly 7032 samples, matching the DQ4AI paper's own reported Telco sample count
+    (Table 2) -- their own preprocessing already excluded these rows before treating the
+    result as the clean baseline.
 
-    Returns (df, metadata_entry) rather than just df: letter.arff's column-name fix (see
+    Returns (df, metadata_entry) rather than just df: letter.arff's column rename (see
     COLUMN_RENAME_FIX) needs to be visible to every downstream consumer of metadata_entry
-    (the polluters, which read numerical_cols/categorical_cols directly from it -- Root
-    code, not something this fix can reach from inside them), not just to the dataframe
-    built here. Callers must use the returned metadata_entry from this point on."""
+    (the polluters, which read numerical_cols/categorical_cols directly from it), not just
+    to the dataframe built here. Callers must use the returned metadata_entry from this
+    point on."""
     df = pd.read_csv(DATA_DIR / ds_name)
     declared = (
         metadata_entry.get("categorical_cols", [])
@@ -217,10 +210,8 @@ def prepare_for_pollution(
         dimension == "class_balance"
         and "class_balance_polluter_classes" in metadata_entry
     ):
-        # Mirror Root code's own run_regression_experiments.py: ClassBalancePolluter chokes
-        # on discretized bins with very few samples (an "IndexError: list index out of
-        # range" surfaces from its internal class-ordering math), so only the pre-selected,
-        # well-populated bins are kept.
+        # Mirror Root code's own run_regression_experiments.py: ClassBalancePolluter needs
+        # well-populated bins, so only the pre-selected ones are kept.
         keep_classes = metadata_entry["class_balance_polluter_classes"]
         df_discr = df_discr[df_discr[discr_col].isin(keep_classes)].reset_index(
             drop=True
@@ -333,8 +324,8 @@ def run_dimension(
                 polluted_df, metadata_entry, task, dimension
             )
         except Exception as exc:
-            # A single pollution level misbehaving (e.g. a repair leaving a degenerate
-            # class distribution at extreme pollution) shouldn't abort the whole dimension's
+            # One pollution level failing (e.g. a repair leaving a degenerate class
+            # distribution at extreme pollution) shouldn't abort the whole dimension's
             # sweep -- log it and move on to the next level.
             warnings.warn(f"[{task}/{dimension}] level failed, skipping: {exc}")
             continue
@@ -380,11 +371,8 @@ def run_task(task: str):
         df, metadata_entry = load_dataset(ds_name, metadata_entry)
         out_path = dataset_output_path(task, ds_name)
 
-        # Resumable: a dimension already present in a prior run's output is not redone.
-        # Long-running sweeps here have been interrupted more than once by environment
-        # issues unrelated to the pipeline itself (lost background-task tracking, a Windows
-        # multiprocessing stall); re-running already-completed dimensions from scratch every
-        # time would waste hours of otherwise-valid results.
+        # Resumable: a dimension already present in a prior run's output is not redone, so
+        # an interrupted sweep can continue without re-running completed dimensions.
         dataset_results = {}
         if out_path.exists():
             with open(out_path) as f:

@@ -3,16 +3,16 @@
     "b2_catastrophic_failures": 0,
     "decision_counts": {
       "repair": 18,
-      "robust": 595,
-      "skip": 463
+      "robust": 635,
+      "skip": 489
     },
-    "hybriddqr_ge_b1_rate": 0.672,
-    "median_B1": 0.4763,
-    "median_B2": 0.5606,
-    "median_B3": 0.5484,
-    "median_B4_oracle": 0.7734,
-    "median_hybriddqr": 0.5662,
-    "n_levels": 1076
+    "hybriddqr_ge_b1_rate": 0.691,
+    "median_B1": 0.4606,
+    "median_B2": 0.5509,
+    "median_B3": 0.5339,
+    "median_B4_oracle": 0.7195,
+    "median_hybriddqr": 0.5465,
+    "n_levels": 1142
   },
   "per_dataset": {
     "Bank": {
@@ -64,16 +64,16 @@
     "Covertype": {
       "b2_catastrophic_failures": 0,
       "decision_counts": {
-        "robust": 15,
-        "skip": 9
+        "robust": 55,
+        "skip": 35
       },
       "hybriddqr_ge_b1_rate": 1.0,
-      "median_B1": 0.1903,
-      "median_B2": 0.1889,
-      "median_B3": 0.1903,
-      "median_B4_oracle": 0.3199,
-      "median_hybriddqr": 0.1903,
-      "n_levels": 24,
+      "median_B1": 0.1877,
+      "median_B2": 0.1886,
+      "median_B3": 0.1877,
+      "median_B4_oracle": 0.3235,
+      "median_hybriddqr": 0.1877,
+      "n_levels": 90,
       "task": "clustering"
     },
     "Credit": {
@@ -173,16 +173,16 @@
     "clustering": {
       "b2_catastrophic_failures": 0,
       "decision_counts": {
-        "robust": 109,
-        "skip": 79
+        "robust": 149,
+        "skip": 105
       },
       "hybriddqr_ge_b1_rate": 1.0,
-      "median_B1": 0.0321,
-      "median_B2": 0.0204,
-      "median_B3": 0.0321,
-      "median_B4_oracle": 0.0895,
-      "median_hybriddqr": 0.0321,
-      "n_levels": 188
+      "median_B1": 0.0411,
+      "median_B2": 0.0876,
+      "median_B3": 0.0411,
+      "median_B4_oracle": 0.1698,
+      "median_hybriddqr": 0.0411,
+      "n_levels": 254
     },
     "regression": {
       "b2_catastrophic_failures": 0,
