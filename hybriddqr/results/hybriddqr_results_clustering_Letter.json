@@ -568,13 +568,13 @@
         "quality_before": 0.5
       },
       {
-        "B1_no_repair_default": 9.369589587782402e-05,
+        "B1_no_repair_default": 9.369589587782402e-5,
         "B2_full_repair_default": 0.0025767791235936075,
-        "B3_no_repair_best_robust": 9.369589587782402e-05,
+        "B3_no_repair_best_robust": 9.369589587782402e-5,
         "B4_oracle": 0.0025767791235936075,
         "decision": "robust",
         "delta_estimate": 0.0,
-        "hybriddqr_metric": 9.369589587782402e-05,
+        "hybriddqr_metric": 9.369589587782402e-5,
         "model_selected": "centroid",
         "pollution_params": "{'random_seed': '502307', 'pollution_level': '1.0', 'target_col': 'class', 'is_categorical': 'True'}",
         "quality_after": 0.0,

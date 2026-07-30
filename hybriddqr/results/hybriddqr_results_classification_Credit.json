@@ -1016,7 +1016,7 @@
         "B3_no_repair_best_robust": 0.5588064553581795,
         "B4_oracle": 0.9322573595979147,
         "decision": "robust",
-        "delta_estimate": 5.226112411527151e-05,
+        "delta_estimate": 5.226112411527151e-5,
         "hybriddqr_metric": 0.5588064553581795,
         "model_selected": "ensemble",
         "pollution_params": "{'random_seed': '502307', '_categorical_cols': \"['status', 'credit_history', 'purpose', 'savings', 'employment_duration', 'installment_rate', 'personal_status_sex', 'other_debtors', 'present_residence', 'property', 'other_installment_plans', 'housing', 'number_credits', 'job', 'people_liable', 'telephone', 'foreign_worker']\", '_numerical_cols': \"['duration', 'amount', 'age']\", '_pollution_levels': \"{'status': 0.75, 'credit_history': 0.75, 'purpose': 0.75, 'savings': 0.75, 'employment_duration': 0.75, 'installment_rate': 0.75, 'personal_status_sex': 0.75, 'other_debtors': 0.75, 'present_residence': 0.75, 'property': 0.75, 'other_installment_plans': 0.75, 'housing': 0.75, 'number_credits': 0.75, 'job': 0.75, 'people_liable': 0.75, 'telephone': 0.75, 'foreign_worker': 0.75, 'duration': 0.75, 'amount': 0.75, 'age': 0.75}\"}",

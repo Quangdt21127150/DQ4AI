@@ -1433,7 +1433,7 @@
         "B3_no_repair_best_robust": 0.4199862942141552,
         "B4_oracle": 0.45132870013696286,
         "decision": "robust",
-        "delta_estimate": -8.828384887010765e-05,
+        "delta_estimate": -8.828384887010765e-5,
         "hybriddqr_metric": 0.4199862942141552,
         "model_selected": "ensemble",
         "pollution_params": "{'random_seed': '5690805', '_categorical_cols': '[\"Wife\\'s education\", \"Husband\\'s education\", \"Wife\\'s religion\", \"Wife\\'s now working?\", \"Husband\\'s occupation\", \\'Standard-of-living index\\', \\'Media exposure\\']', '_numerical_cols': '[\"Wife\\'s age\", \\'Number of children\\']', '_pollution_levels': '{\"Wife\\'s education\": 0.5, \"Husband\\'s education\": 0.5, \"Wife\\'s religion\": 0.5, \"Wife\\'s now working?\": 0.5, \"Husband\\'s occupation\": 0.5, \\'Standard-of-living index\\': 0.5, \\'Media exposure\\': 0.5, \"Wife\\'s age\": 0.5, \\'Number of children\\': 0.5}'}",
