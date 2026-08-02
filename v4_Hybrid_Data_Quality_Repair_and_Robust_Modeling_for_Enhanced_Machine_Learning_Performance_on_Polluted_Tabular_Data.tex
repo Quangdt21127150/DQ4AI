@@ -439,15 +439,15 @@ Section~\ref{sec:problem} to each feature and aggregates the
 results at the dataset level.
 
 The module also estimates the \emph{repair potential}
-$\Delta_j(\mathcal{D})$ for each dimension $i$ as follows:
+$\Delta_i(\mathcal{D})$ for each dimension $i$ as follows:
 \begin{equation}
   \Delta_i = \rho_{\text{ref}}\!\left(\mathbf{q}'\right) -
               \rho_{\text{ref}}\!\left(\mathbf{q}\right),
 \end{equation}
-where $\mathbf{q}'$ is the quality profile after perfect repair of
-dimension $i$, and $\rho_{\text{ref}}$ is a reference model
-performance estimator (e.g., a linear classifier for classification
-tasks).
+where $\mathbf{q}'$ is the quality profile after applying dimension
+$i$'s repair operator $r_i$ once, and $\rho_{\text{ref}}$ is a
+reference model performance estimator (e.g., a linear classifier
+for classification tasks).
 This estimate guides the repair prioritization in the next stage.
 
 \subsubsection{Per-Dimension Quality Metrics.}
@@ -791,8 +791,8 @@ sensitivity of the chosen robust model.
 Section~\ref{sec:experiments} checks this bound against our real
 measurements: the additive, per-dimension view holds up well
 in most of our runs, but Section~\ref{sec:risk} reports one
-concrete case where a repair operator interacted badly with a
-model family in a way the additive bound does not predict.
+concrete case where a repair operator has essentially no effect
+on a dimension, in a way the additive bound does not predict.
 
 % ============================================================
 \section{Complexity Analysis}
